@@ -127,12 +127,7 @@ RUN apt-get update && \
 
 # 2. ############## Install dedicate packages for Isaac ROS ###############
 
-
-
-# Add here extra dependecies for specific NVIDIA Isaac ROS packages
-# Open README
-
-
+# Nothing to add here
 
 # 3. ############## Build & Install Isaac ROS packages ####################
 # From this stage you can list all packages you want to build
@@ -160,11 +155,13 @@ RUN . /opt/ros/$ROS_DISTRO/install/setup.sh && \
 
 # 4. ############## Install your ROS2 dependecies #########################
 
-
-
-# Add Here extra dependecies for your specific ROS2 packages
-
-
+# Install Realsense
+RUN apt-get update && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || \
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE && \
+    add-apt-repository -y "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main" -u && \
+    apt-get install -y rsync librealsense2-utils librealsense2-dev && \
+    rm -rf /var/lib/apt/lists/*
 
 # 5. ############## Build & Install your ROS2 packages ####################
 
@@ -178,6 +175,9 @@ RUN mkdir -p ${ROS_WS}/src && \
     if [ -s ${ROSINSTALL} ]; then \
         vcs import ${ROS_WS}/src < ${ROSINSTALL} \
     ; fi
+
+RUN cd ${ROS_WS}/src && \
+    git clone --depth 1 --branch `git ls-remote --tags https://github.com/IntelRealSense/realsense-ros.git | grep -Po "(?<=tags/)3.\d+\.\d+" | sort -V | tail -1` https://github.com/IntelRealSense/realsense-ros.git
 
 # Change workdir
 WORKDIR $ROS_WS
